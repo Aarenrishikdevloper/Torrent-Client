@@ -39,7 +39,8 @@ TorrentParser::TorrentParser(const std::string &filePath):file_(MultiFile{}) {
 
 
 
-    } catch (...) {
+    } catch (const std::exception& e) {
+        throw std::runtime_error(std::format("[CRITICAL] Error: {}", e.what()));
     }
 }
 //Parse Trackers
