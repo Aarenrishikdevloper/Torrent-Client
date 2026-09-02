@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/torrent_test.dir/test/torentparser_test.cc.o CMakeFiles/torrent_test.dir/core/TorenParser.cc.o CMakeFiles/torrent_test.dir/core/utils.cc.o -o torrent_test  -lcryptopp /usr/lib/x86_64-linux-gnu/libfmt.so.9.1.0 
