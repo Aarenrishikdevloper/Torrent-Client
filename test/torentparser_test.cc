@@ -1,110 +1,75 @@
 #include <iostream>
-#include <stdexcept>
+#include <string>
+
 
 #include "../includes/TorrentParser.hpp"
+#include "../includes/PeerRetriever.hpp"
 
 int main()
 {
     try
     {
-        // ----------------------------------------------------
-        // Load the torrent file
-        // ----------------------------------------------------
+        // Path to your test torrent
+        const std::string torrentPath = "test/test.iso.torrent";
 
-        TorrentParser torrent("test/test.iso.torrent");
+        // Create torrent parser
+        TorrentParser torrent(torrentPath.c_str());
 
+        std::cout << "Torrent loaded successfully\n";
 
-        // ----------------------------------------------------
-        // Basic torrent information
-        // ----------------------------------------------------
-
-        std::cout << "===== Torrent Information =====\n";
-
-        std::cout << "Announce: "
-                  << torrent.getAnnounce()
-                  << '\n';
-
-        std::cout << "Info Hash: "
-                  << torrent.getInfoHash()
-                  << '\n';
-
-        std::cout << "Piece Length: "
-                  << torrent.getPieceLenght()
-                  << " bytes\n";
+        std::cout << "Tracker: "
+                  << torrent.getAnnounce() << '\n';
 
 
-        // ----------------------------------------------------
-        // Check torrent type
-        // ----------------------------------------------------
+        std::cout << "File size: "
+                  << torrent.getLengthOne() << '\n';
 
-        if (torrent.isSingleFile())
+        // Generate a 20-byte BitTorrent peer ID.
+        // This is only for testing.
+        const std::string peerId =
+            "-PC0001-123456789012";
+
+        // Port on which our client claims it is listening.
+        const int port = 6881;
+
+        // We haven't downloaded anything yet.
+        const long long bytesDownloaded = 0;
+
+        // Create PeerRetriever.
+        //
+        // The constructor will contact the tracker.
+        PeerRetriever retriever(
+            peerId,
+            port,
+            torrent,
+            bytesDownloaded
+        );
+
+        // Get peers returned by tracker.
+        const auto& peers = retriever.getPeers();
+
+        std::cout << "\nPeers received: "
+                  << peers.size() << "\n";
+
+        // Display peers
+        for (const auto& peer : peers)
         {
-            std::cout << "\nTorrent type: Single-file\n";
-
-            const auto& file = torrent.getSingleFile();
-
-            std::cout << "File name: "
-                      << file.name
-                      << '\n';
-
-            std::cout << "File size: "
-                      << file.lenght
-                      << " bytes\n";
-        }
-        else
-        {
-            std::cout << "\nTorrent type: Multi-file\n";
-
-            const auto& multi = torrent.getMultiFile();
-
-            std::cout << "Directory: "
-                      << multi.dirName
-                      << '\n';
-
-            std::cout << "Number of files: "
-                      << multi.files.size()
+            std::cout << "IP: "
+                      << peer.first
+                      << "  Port: "
+                      << peer.second
                       << '\n';
         }
 
-
-        // ----------------------------------------------------
-        // Trackers
-        // ----------------------------------------------------
-
-        std::cout << "\n===== Trackers =====\n";
-
-        const auto& trackers = torrent.getAnnounceList();
-
-        for (std::size_t i = 0; i < trackers.size(); ++i)
-        {
-            std::cout << i << ": "
-                      << trackers[i]
-                      << '\n';
-        }
-
-
-        // ----------------------------------------------------
-        // Piece information
-        // ----------------------------------------------------
-
-        std::cout << "\n===== Pieces =====\n";
-
-        std::cout << "Piece hash data size: "
-                  << torrent.getPieces().size()
-                  << " bytes\n";
-
-        std::cout << "Number of pieces: "
-                  << torrent.getPieces().size() / 20
-                  << '\n';
-
-
-        std::cout << "\nParser test PASSED\n";
+        std::cout << "\nTracker interval: "
+                  << retriever.getInterval()
+                  << " seconds\n";
 
         return 0;
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Parser test FAILED: "
+        std::cerr << "TEST FAILED: "
                   << e.what()
                   << '\n';
 

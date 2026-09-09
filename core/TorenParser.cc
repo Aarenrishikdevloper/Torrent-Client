@@ -92,8 +92,9 @@ const std::string &TorrentParser::getAnnounce() const noexcept {
     return announce_;
 
 }
-const std::vector<std::string>&TorrentParser::getAnnounceList() const noexcept {
-    return announceList_;
+
+std::string TorrentParser::getAnnounceList(size_t i) const noexcept {
+    return announceList_[i];
 }
 const std::string &TorrentParser::getInfoHash() const noexcept {
     return infoHash_;
@@ -113,4 +114,23 @@ const MultiFile &TorrentParser::getMultiFile() const noexcept {
 }
 const SingleFile &TorrentParser::getSingleFile() const noexcept {
     return std::get<SingleFile>(file_);
+}
+
+size_t TorrentParser::getAnnounceList_Lenght() const noexcept {
+    return announceList_.size();
+}
+
+long long TorrentParser::getLengthOne() const noexcept {
+    if (isSingleFile()) {
+        return  static_cast<long long>(std::get<SingleFile>(file_).lenght);
+    }
+    long long total = 0;
+    const auto&multi = std::get<MultiFile>(file_);
+    for (const auto&fileEntry : multi.files) {
+        const auto& fileDict = std::get<bencode::dict>(fileEntry);
+        if (fileDict.count("length")) {
+            total += std::get<long long>(fileDict.at("length"));
+        }
+    }
+    return total;
 }

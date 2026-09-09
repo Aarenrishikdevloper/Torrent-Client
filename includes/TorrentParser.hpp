@@ -1,7 +1,8 @@
 #pragma once
 #include <cstdint>
 #include <string>
-
+#include <variant>
+#include <vector>
 #include "../bencoder/bencoder.hpp"
 
 //info about a single file
@@ -21,7 +22,7 @@ class TorrentParser {
       //main tracker
       const std::string& getAnnounce() const noexcept;
       //Additional Tracker
-      const std::vector<std::string>&getAnnounceList() const noexcept;
+    std::string getAnnounceList(size_t i) const noexcept;
      //Torrent identifier
     const std::string& getInfoHash() const noexcept;
     //size of each piece
@@ -34,6 +35,8 @@ class TorrentParser {
     const SingleFile& getSingleFile() const noexcept;
     //Multi file information
     const MultiFile& getMultiFile() const noexcept;
+    long long getLengthOne() const noexcept;
+    size_t getAnnounceList_Lenght() const noexcept;
 private:
     //parse tracker information
 
