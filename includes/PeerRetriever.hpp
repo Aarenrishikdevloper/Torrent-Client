@@ -23,7 +23,7 @@ class PeerRetriever {
       explicit PeerRetriever(const std::string&peerId, int port, const TorrentParser& tfp, long long bytesDownloaded);
       ~PeerRetriever() = default;
      //contact the peers that were retrieved
-    const std::vector<std::pair<std::string, long long>> retrivePeers(const TorrentParser& tfp, long long bytesDownloaded);
+    std::vector<std::pair<std::string, long long>> retrivePeers(const TorrentParser &tfp, long long bytesDownloaded);
     //return the peers that were retrieved
     std::vector<std::pair<std::string, long long>> getPeers() const;
     //Return the tracker recomended announce interval

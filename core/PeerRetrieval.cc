@@ -33,7 +33,8 @@ PeerRetriever::PeerRetriever(const std::string &peerId, int port, const TorrentP
 
 }
 
-const std::vector<std::pair<std::string, long long> > PeerRetriever::retrivePeers(const TorrentParser &tfp, long long bytesDownloaded) {
+std::vector<std::pair<std::string, long long> > PeerRetriever::retrivePeers(
+    const TorrentParser &tfp, long long bytesDownloaded) {
     std::vector<std::pair<std::string, long long>> peers;
     //tracker index tells us which tracker we are trying
     size_t trackerIndex = 0;
