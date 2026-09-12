@@ -67,3 +67,10 @@ long long bytesToPort(const std::string &bytes) {
      port |= static_cast<unsigned char>(bytes[1]);
      return port;
  }
+int getIntFromStr(const std::string& input) {
+     if (input.length() < 4) {
+         throw std::invalid_argument("Invalid input:: String does no contain 4 bytes");
+     }
+     const unsigned int result = (static_cast<unsigned char>(input[0])<< 24) | (static_cast<unsigned char>(input[1]) << 16) | (static_cast<unsigned char>(input[2]) << 8) | (static_cast<unsigned char>(input[3]));
+     return  static_cast<int>(result);
+ }
