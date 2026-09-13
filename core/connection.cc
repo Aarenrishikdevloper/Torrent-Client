@@ -136,7 +136,10 @@ static  void recVData(int sockfd, char*buffer, int size) {
 }
 
 std::string reciveData(int soketfd, int size) {
-
+    timeval timeout{3,0};
+    if (setsockopt(soketfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1) {
+        throw std::runtime_error("setsockopt timeout");
+    }
     //case 1 we do not know the size of the incoming message
    if (!size) {
        //read and decode the 4-byte length
