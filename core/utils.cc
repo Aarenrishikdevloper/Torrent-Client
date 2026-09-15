@@ -74,3 +74,9 @@ int getIntFromStr(const std::string& input) {
      const unsigned int result = (static_cast<unsigned char>(input[0])<< 24) | (static_cast<unsigned char>(input[1]) << 16) | (static_cast<unsigned char>(input[2]) << 8) | (static_cast<unsigned char>(input[3]));
      return  static_cast<int>(result);
  }
+
+std::string intToBytes(int x) {
+    std::string bytes(sizeof(int), '\0');
+    std::memcpy(&bytes[0], &x, sizeof(int));
+     return bytes;
+}

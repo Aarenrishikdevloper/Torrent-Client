@@ -7,3 +7,4 @@ std::string hexDecode(const std::string& value);
 std::string bytesToIpAddress(const std::string& bytes);
 long long bytesToPort(const std::string& bytes);
 int getIntFromStr(const std::string& input);
+std::string intToBytes(int x);
