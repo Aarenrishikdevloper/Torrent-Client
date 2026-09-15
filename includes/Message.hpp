@@ -11,7 +11,7 @@ enum class eMeesageType : int {
     Bitfield = 5,
     Request = 6,
     Piece  = 7,
-    Cancel =0,
+    Cancel =8,
 
 
 
