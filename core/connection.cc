@@ -119,16 +119,17 @@ static  void recVData(int sockfd, char*buffer, int size) {
             0
             );
         if (byteRecived == -1) {
+            // Socket timeout expired — retry, our manual clock controls the real timeout
+            if (errno == EAGAIN || errno == EWOULDBLOCK) continue;
+
+
+
             throw std::runtime_error("recv() error: " + std::string(strerror(errno)));
         }
         if (byteRecived == 0) {
             throw std::runtime_error("Connection closed by peer");
         }
-        // Socket timeout expired — retry, our manual clock controls the real timeout
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            continue;
-            throw std::runtime_error("recv() error: " + std::string(strerror(errno)));
-        }
+
         //add newly add data to the total
         SumRecived += byteRecived;
     }

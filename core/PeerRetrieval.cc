@@ -65,7 +65,7 @@ std::vector<std::pair<std::string, long long> > PeerRetriever::retrivePeers(
                 if (curl) {
                     std::string response;
                   //Build the tracker request
-                    const std::string query = announce+"?info_hash="+urlEncodeHex(hexDecode(tfp.getInfoHash()))+"&peer_id="+peerId+"&port="+std::to_string(port)+"&uploaded=0"+"downloaded="+std::to_string(bytesDownloaded)+"&left"+std::to_string(fileSize-bytesDownloaded)+"&compact=1";
+                    const std::string query = announce+"?info_hash="+urlEncodeHex(hexDecode(tfp.getInfoHash()))+"&peer_id="+peerId+"&port="+std::to_string(port)+"&uploaded=0"+"&downloaded="+std::to_string(bytesDownloaded)+"&left="+std::to_string(fileSize-bytesDownloaded)+"&compact=1";
                     //tell curl where to send the request
                      curl_easy_setopt(curl, CURLOPT_URL, query.c_str());
                      //don't wait forever if the tracker does not respond
@@ -488,7 +488,9 @@ std::vector<std::pair<std::string, long long>> PeerRetriever::retrivePeersUDP(co
 }
 //get peers
 std::vector<std::pair<std::string, long long>> PeerRetriever::getPeers() const {
+
     return  allPeers;
+
 }
 
 long long PeerRetriever::getInterval() const {

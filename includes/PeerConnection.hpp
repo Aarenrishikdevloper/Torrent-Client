@@ -2,6 +2,7 @@
 #include <string>
 
 #include "Message.hpp"
+#include "PieceManager.hpp"
 #include "../includes/PeerQueue.hpp"
 
 class PeerConnection {
@@ -11,6 +12,7 @@ private:
     //information required for the Bitorrent handsake
     std::string infoHash;
     std::string peerId;
+    PieceManager*pieceManager;
     //information about the current remote peer
     std::pair<std::string, long long> peer;
     //peer id received from the remote peer during handshake
@@ -34,15 +36,15 @@ private:
 
 public:
     // constructor
-  PeerConnection(const std::string infoHash, const std::string&peerId, PeerQueue* peers);
+  explicit  PeerConnection(const std::string infoHash, const std::string&peerId, PeerQueue* peers, PieceManager* pieceManager);
   ~PeerConnection();
     //all peer connection owns a socket  and its therefore
     //neither copyable  nor movable
     PeerConnection(const PeerConnection&) = delete;
     PeerConnection& operator=(const PeerConnection&) = delete;
-    PeerConnection(const PeerConnection&&) = delete;
+
     PeerConnection& operator=(const PeerConnection&&) = delete;
     void start(); // start connection to peers and communication with them
-
+   void requestPiece();
 
 };

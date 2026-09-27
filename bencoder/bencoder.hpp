@@ -67,7 +67,7 @@ namespace bencode {
       return *this;
     }
 
-    void swap(const map_proxy &rhs) { proxy_->swap(*rhs.proxy); }
+   void swap(const map_proxy &rhs){proxy_->swap(*rhs.proxy_);}
 
     operator map_type &() { return *proxy_; };
     operator const map_type &() const { return *proxy_; };
@@ -82,8 +82,7 @@ namespace bencode {
     template<typename K>
     mapped_type & at(K &&k) { return proxy_->at(std::forward<K>(k)); }
     template<typename K>
-    const mapped_type &
-    at(K &&k) const { return proxy_->at(std::forward<K>(k)); }
+    const mapped_type& at(K &&k) const { return proxy_->at(std::forward<K>(k)); }
     template<typename K>
     mapped_type & operator [](K &&k) { return (*proxy_)[std::forward<K>(k)]; }
 

@@ -6,9 +6,15 @@
 #include <iostream>
 #include "utils.hpp"
 #include "../includes/connection.hpp"
+#include "../includes/PieceManager.hpp"
 
-PeerConnection::PeerConnection(const std::string infoHash, const std::string &peerId, PeerQueue *peers):infoHash(infoHash),peerId(peerId),peers(peers) {
-
+PeerConnection::PeerConnection(const std::string infoHash,  const std::string &peerId, PeerQueue *peers,PieceManager*pieceManager):infoHash(infoHash),peerId(peerId),peers(peers),pieceManager(pieceManager) {
+     if (peers == nullptr) {
+         throw std::invalid_argument("Null peers");
+     }
+     if (pieceManager == nullptr) {
+         throw std::invalid_argument("Null pieceManager");
+     }
 }
 //close the tcp socket when peerConnection is destroyed
 PeerConnection::~PeerConnection() {
@@ -23,6 +29,9 @@ void PeerConnection::establishConnection()  {
     sockfd = createConnection(peer.first, peer.second);
     //once TCP is established perform the Bittorrent protocol hasndsake
     performHandsake();
+    //tell the peer we are interested in the piece they have
+    const Message Interested(eMeesageType::Interested, "");
+    sentData(sockfd, Interested.getMessageStr());
 
 }
 
@@ -76,7 +85,7 @@ void PeerConnection::performHandsake() {
 }
 
 void PeerConnection::start() {
-    while (true) {
+    while (!pieceManager->isComplete()) {
         //get the next available peer
         peer = peers->getPeers();
         //no peer is currently avalaible
@@ -89,20 +98,23 @@ void PeerConnection::start() {
             //connect to the peer and perform handshake
             establishConnection();
             //once connected continuously  receive  Bittorrent  message
-            while (true) {
+            while (!pieceManager->isComplete()) {
                    Message message = receiveMessage();
                    handleMessage(message);
             }
         } catch (const std::runtime_error &e) {
-            std::cerr << e.what() << std::endl;
+           if (!pieceManager->isComplete()) {
+               std::cerr<<e.what()<<std::endl;
+           }
             //report the bad peer and add it to bad peer list
             peers->reportBadPeers(peer);
-            //close the connection
-            if (sockfd >=0) {
-                close(sockfd);
-                sockfd = -1;
-            }
 
+
+        }
+        //close the connection
+        if (sockfd >=0) {
+            close(sockfd);
+            sockfd = -1;
         }
 
     }
@@ -134,19 +146,50 @@ void PeerConnection::handleMessage(const Message &message) {
             //the peer allow us to request pieces
              choke = false;
             std::cout << "Unchoke" << std::endl;
+            if (!pieceManager->isComplete()) {
+                requestPiece();
+            }
             break;
         }
 
         case eMeesageType::Have: {
             std::cout << "Have" << std::endl;
+            //HAVE PAYLOAD
+            const std::string&paylaoad = message.getPayload();
+            if (paylaoad.length() !=4) {
+                throw std::invalid_argument("Invalid HAVE Message");
+            }
+            //update piecemanger knoeledge  about this  piece
+            pieceManager->addToBitField(peerPerrId, paylaoad);
             break;
         }
         case eMeesageType::Bitfield:{
        std::cout << "Bitfield" << std::endl;
+            //bitfield contains the peeers complete piece avalaibility
+            bitfield = message.getPayload();
+             //give the complete bitfiled to piecemanger
+             pieceManager->addPeerBitField(peerPerrId, bitfield);
        break;
         }
             case eMeesageType::Piece: {
             std::cout << "Piece" << std::endl;
+            const std::string&paylaoad = message.getPayload();
+             //4bytes  piece index 4 bytes begin therefore at least 8 bit
+             if (paylaoad.length()  < 8) {
+                 throw std::invalid_argument("Invalid PIECE Message");
+             }
+               //first 4bytes is piece index
+                const int pieceIndex = getIntFromStr(paylaoad.substr(0,4));
+                 //Next 4 bytes is block offset
+                  const int begin =  getIntFromStr(paylaoad.substr(4,4));
+                //everything after the first 8 bytes is actual block data
+                const std::string block = paylaoad.substr(8);
+               //give the recive block to piece
+            pieceManager->blockRecievd(pieceIndex,begin,block);
+            //if the torent is not finished and peer not choke immediatly ask another block
+            if (!choke && !pieceManager->isComplete()) {
+                requestPiece();
+            }
             break;
         }
         case eMeesageType::Cancel: {
@@ -154,4 +197,17 @@ void PeerConnection::handleMessage(const Message &message) {
             break;
         }
     }
+
+}
+
+void PeerConnection::requestPiece() {
+    try {
+        //ask pieceManger which piece / block we should request
+        std::string request = Message(eMeesageType::Request, pieceManager->requestPiece(peerPerrId)).getMessageStr();
+        //send the complete request message to the connected peer
+        sentData(sockfd, request);
+    } catch (const std::runtime_error &e) {
+        std::cerr << e.what() << std::endl;
+    }
+
 }

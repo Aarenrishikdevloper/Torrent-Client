@@ -2,7 +2,7 @@
 #include <fstream>
 #include<format>
 #include<iostream>
-
+#include "../bencoder/bencoder.hpp"
 #include "../includes/utils.hpp"
 #include "spdlog/spdlog.h"
 //intially put an empty multifile object into variant
