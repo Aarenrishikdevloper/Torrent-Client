@@ -7,8 +7,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 include_directories(/home/rishik/.local/include)
 link_directories(/home/rishik/.local/lib)
 # CMakeLists.txt
-add_executable(torrent_test
-        test/torentparser_test.cc
+add_executable(torrent_cli
+        apps/cli/main.cc
         core/TorenParser.cc
         core/utils.cc
         core/PeerRetrieval.cc
@@ -22,20 +22,20 @@ add_executable(torrent_test
 
 )
 
-target_include_directories(torrent_test PRIVATE includes)
-target_link_libraries(torrent_test PRIVATE curl)
+target_include_directories(torrent_cli PRIVATE includes)
+target_link_libraries(torrent_cli PRIVATE curl)
 
 find_package(cryptopp QUIET)
 if(cryptopp_FOUND)
-    target_link_libraries(torrent_test PRIVATE cryptopp::cryptopp)
+    target_link_libraries(torrent_cli PRIVATE cryptopp::cryptopp)
 else()
     # fallback: link by name
-    target_link_libraries(torrent_test PRIVATE cryptopp)
+    target_link_libraries(torrent_cli PRIVATE cryptopp)
 endif()
 
 find_package(fmt QUIET)
 if(fmt_FOUND)
-    target_link_libraries(torrent_test PRIVATE fmt::fmt)
+    target_link_libraries(torrent_cli PRIVATE fmt::fmt)
 else()
-    target_link_libraries(torrent_test PRIVATE fmt)
+    target_link_libraries(torrent_cli PRIVATE fmt)
 endif()
