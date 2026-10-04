@@ -144,3 +144,6 @@ const std::string &TorrentClient::getFileName() {
     }
     return tfp.getMultiFile().dirName;
 }
+PieceManager &TorrentClient::getPieceManager() {
+    return pieceManager;
+}

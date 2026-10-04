@@ -5,7 +5,7 @@
 #include "utils.hpp"
 #include "../includes/TorrentParser.hpp"
 #include "../bencoder/bencoder.hpp"
-#include <thread>
+#include "thread"
 #ifndef AMOUNT_HASH_SYMBOLS
 # define  AMOUNT_HASH_SYMBOLS 37
 #endif
@@ -75,15 +75,17 @@ static std::vector<std::string>splitHashPieces(const std::string&pieces) {
 //intialise pieces
 std::vector<std::unique_ptr<Piece> > PieceManager::intializePieces() {
     std::vector<std::unique_ptr<Piece>> result;
+
     //split the concatenated 20 byte SHA-1 hashes
     const std::vector<std::string> pieceHashes = splitHashPieces(tfp.getPieces());
     totalpeices = pieceHashes.size();
     const std::uint64_t piecesLength = tfp.getPieceLenght();
     // calculate the total torrent size
-    std::uint64_t totalLenght = 0;
+
     if (tfp.isSingleFile()) {
         const SingleFile &singleFile = tfp.getSingleFile();
-        totalLenght =singleFile.lenght;
+        totalbytes =singleFile.lenght;
+
     }
     else {
         const MultiFile &multiFile = tfp.getMultiFile();
@@ -91,7 +93,7 @@ std::vector<std::unique_ptr<Piece> > PieceManager::intializePieces() {
             //each element is length:integer and path::list
             const bencode::dict&fileDict = std::get<bencode::dict>(fileData);
             const std::uint64_t fileLenght = static_cast<std::uint64_t>(std::get<long long>(fileDict.at("length")));
-            totalLenght += fileLenght;
+            totalbytes += fileLenght;
         }
     }
     result.reserve(pieceHashes.size());
@@ -102,8 +104,8 @@ std::vector<std::unique_ptr<Piece> > PieceManager::intializePieces() {
         //global offset of this piece
         const std::uint64_t pieceOffset = i * piecesLength;
         //the last piece may be samller
-        if (pieceOffset + piecesLength >totalLenght) {
-            currentPieceslength = totalLenght - pieceOffset;
+        if (pieceOffset + piecesLength >totalbytes) {
+            currentPieceslength = totalbytes - pieceOffset;
         }
         //no of 16KiB block required by piece
         const int blockCount = static_cast<int>((currentPieceslength + BLOCK_SIZE -1)/BLOCK_SIZE);
@@ -223,6 +225,7 @@ void PieceManager::blockRecievd(int index, int begin, const std::string &blockSt
 
      //the piece now   completly verified  nullptr means the pice is finished
         Pieces[index] = nullptr;
+        downloadBytes += dataTOfile.size();
         ++totalDownload;
 
     }
@@ -367,13 +370,13 @@ void PieceManager::addToBitField(const std::string &peerPeerId, const std::strin
     }
     //the payload of a have message contains a piece index
     const int bitPosition = getIntFromStr(payload);
-    //veriying the piece index is valid
+    //verifying the piece index is valid
     if (bitPosition <0 || static_cast<std::size_t>(bitPosition) >= totalpeices) {
         std::cout << "Invalid peer payload " << payload << std::endl;
     }
-    //iterator-< second is the vector<bool> belonging to this per
+    //iterator-> second is the vector<bool> belonging to this peer
     std::vector<bool>&bitfield = iterator->second;
-    //the peer has the piece therefore se the piece bit to true
+    //the peer has the piece therefore set the piece bit to true
     bitfield[bitPosition] = true;
 
 }
@@ -510,5 +513,27 @@ void PieceManager::trackProgress()
 
 void PieceManager::trackSpeed()
 {
-    // TODO: implement speed tracking
+
+}
+
+DowloadStats PieceManager::getStats() const {
+    std::lock_guard<std::mutex> lock(mutex);
+    DowloadStats stats;
+    stats.downloadBytes =downloadBytes;
+    stats.totalbytes = totalbytes;
+    stats.completedPices =totalDownload;
+    stats.totalPics = totalpeices;
+    stats.complete = totalbytes > 0 && totalDownload == totalpeices;
+    //speed:recompute at most once per speed the smooth it
+    const auto now = std::chrono::steady_clock::now();
+    const double dt = std::chrono::duration<double>(now - lastSpeedTime).count();
+    if (dt >= 1.0) {
+        const double delta = static_cast<double>(downloadBytes) - static_cast<double>(lastSpeedbytes);
+        const double instant = delta /dt / BYTES_PER_MB;
+        smothedSpeed = (smothedSpeed == 0.0)?instant:0.7*smothedSpeed+0.3*instant;
+        lastSpeedbytes = downloadBytes;
+        lastSpeedTime = now;
+    }
+    stats.speedMBps = smothedSpeed;
+    return stats;
 }

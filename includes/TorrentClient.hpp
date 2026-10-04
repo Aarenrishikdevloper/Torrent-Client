@@ -29,4 +29,5 @@ private:
     void run();
     long long getFileSize()const noexcept;
     const std::string&getFileName();
+   PieceManager& getPieceManager();
 };

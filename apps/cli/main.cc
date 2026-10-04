@@ -2,6 +2,7 @@
 #include <iostream>
 #include "../../cxxopts/cxxopts.hpp"
 #include "../../includes/TorrentClient.hpp"
+#include "tui/tui.hpp"
 
 int main (int argc, char ** argv) {
     //check command-line-argument
@@ -40,16 +41,26 @@ int main (int argc, char ** argv) {
              "d, directory", "Directory where files are saved",
              cxxopts::value<std::string>()
         )
+        (
+            "tui", "Lance terminal user interface"
+        )
         // -h / --help
         (
             "h, help",
             "(Print Usage)"
             );
+
         //parse command line argument
          auto result = options.parse(argc, argv);
         //handle help
         if (result.count("help")) {
             std::cerr << options.help() << std::endl;
+            return 0;
+        }
+        //handle tui
+        if (result["tui"].as<bool>()) {
+            TorrentTui tui;
+            tui.run();
             return 0;
         }
         downloadPath = result["directory"].as<std::string>();

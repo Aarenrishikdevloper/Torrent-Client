@@ -7,30 +7,47 @@
 #include "Piece.hpp"
 #include "TorrentParser.hpp"
 
+struct  DowloadStats {
+ std::uint64_t downloadBytes =0;
+    std::uint64_t totalbytes =0;
+     double speedMBps =0.0;
+    std::size_t completedPices =0;
+    std::size_t totalPics =0;
+    bool complete =false;
+
+};
 class PieceManager {
     private:
       const TorrentParser tfp;
       //directory where the torrent contents will be downloaded
      std::filesystem::path downLoadPath;
-     std::size_t totalpeices =0;
-     std::uint64_t totalDownload =0;
-     //store which pieces are avaliable from each peer
-     std::unordered_map<std::string, std::vector<bool>> peerBitField;
-     //all pieces belonging to the torrent
-      std::vector<std::unique_ptr<Piece>> Pieces;
-      //use for single-file torrents
-      std::string downloadFilePath;
-      std::ofstream downloadFile;
+    //use for single-file torrents
+    std::string downloadFilePath;
+    std::ofstream downloadFile;
+    std::size_t totalpeices =0;
+    std::uint64_t totalDownload =0;
+    std::uint64_t downloadBytes =0;
+    std::uint64_t totalbytes =0;
+    //store which pieces are avaliable from each peer
+    std::unordered_map<std::string, std::vector<bool>> peerBitField;
+    //all pieces belonging to the torrent
+    std::vector<std::unique_ptr<Piece>> Pieces;
     //start time of download
     std::chrono::time_point<std::chrono::steady_clock> startTime = std::chrono::steady_clock::now();
     //no of bytes at the previous progress checks
     std::uint64_t lastCheckFileSize = 0;
+
     //protect PieceManager state
-    std::mutex mutex;
+    mutable std::mutex mutex;
     //protect file writing
     std::mutex mutexWrite;
+    mutable double smothedSpeed = 0.0;
+    mutable std::uint64_t lastSpeedbytes = 0;
+   mutable std::chrono::steady_clock::time_point lastSpeedTime = std::chrono::steady_clock::now();
+
     //create all place objects
     std::vector<std::unique_ptr<Piece>> intializePieces();
+
     //write a complete piece to disk
     void WriteDataToFile(
         int index,
@@ -67,6 +84,9 @@ public:
     void trackProgress();
     //display download  speed;
     void trackSpeed();
+ DowloadStats getStats() const;
+
+
 
 
 
