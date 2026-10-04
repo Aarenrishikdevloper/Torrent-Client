@@ -381,140 +381,6 @@ void PieceManager::addToBitField(const std::string &peerPeerId, const std::strin
 
 }
 static constexpr float BYTES_PER_MB = 1'048'576.0f;
-void PieceManager::display(
-    const float currentFileSize,
-    const double percent,
-    const int lengthOfSize)
-{
-    // ── Speed ────────────────────────────────────────────────
-    const float speedMBps =
-        (currentFileSize - lastCheckFileSize) / BYTES_PER_MB;
-
-    // ── Elapsed time — compute tiers directly ────────────────
-    const auto elapsed = std::chrono::steady_clock::now() - startTime;
-    const auto totalSecs =
-        std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
-
-    const int ss = static_cast<int>(totalSecs % 60);
-    const int mm = static_cast<int>((totalSecs / 60) % 60);
-    const int hh = static_cast<int>((totalSecs / 3600) % 24);
-
-    // ── Progress bar — build into a buffer, one write ────────
-    const int filled =
-        static_cast<int>(percent * AMOUNT_HASH_SYMBOLS / 100.0);
-
-    std::ostringstream line;
-    line << " ["
-         << std::setw(5) << std::fixed << std::setprecision(1) << percent
-         << "%]["
-         << std::setw(lengthOfSize) << std::fixed << std::setprecision(1)
-         << currentFileSize / BYTES_PER_MB
-         << "Mb]["
-         << std::setw(4) << std::fixed << std::setprecision(1)
-         << speedMBps
-         << "Mb/s][";
-
-    line << std::string(filled, '#')
-         << std::string(AMOUNT_HASH_SYMBOLS - filled, '.');
-
-    line << "]["
-         << std::setfill('0')
-         << std::setw(2) << hh << ':'
-         << std::setw(2) << mm << ':'
-         << std::setw(2) << ss
-         << "]\r";
-
-    // Single write + flush — avoids interleaved output
-    std::cout << line.str() << std::flush;
-
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-}
-
-
-// ============================================================
-// Track progress
-// ============================================================
-
-
-void PieceManager::trackProgress()
-{
-    // ── Total torrent size ───────────────────────────────────
-    std::uint64_t totalLength = 0;
-    std::string name = "no name";
-    if (tfp.isSingleFile())
-    {
-        const SingleFile &singleFile = tfp.getSingleFile();
-        totalLength = singleFile.lenght;
-        name = singleFile.name;
-    }
-    else
-    {
-
-        name = tfp.getMultiFile().dirName;
-
-        for (const bencode::data& fileData : tfp.getMultiFile().files)
-        {
-
-            const auto& fileDict = std::get<bencode::dict>(fileData);
-            totalLength += static_cast<std::uint64_t>(
-                std::get<bencode::integer>(fileDict.at("length")));
-
-        }
-    }
-
-    // ── Header ───────────────────────────────────────────────
-    // std::to_string replaces the hand-rolled getLength()
-    const int lengthOfSize =
-        static_cast<int>(
-            std::to_string(totalLength / static_cast<uint64_t>(BYTES_PER_MB))
-                .size()) + 2;
-
-    const std::string separator(AMOUNT_HASH_SYMBOLS + 35 + lengthOfSize, '-');
-
-    std::cout << separator
-              << "\nFile: "      << name
-              << "\nDirectory: " << downLoadPath
-              << '\n';
-
-    // ── Progress loop ────────────────────────────────────────
-    while (!isComplete())
-    {
-        const std::size_t completed = [&] {
-            std::lock_guard<std::mutex> lock(mutex);
-            return totalDownload;
-        }();  // lock released immediately after read
-
-        const double pct =
-            totalpeices == 0
-                ? 100.0
-                : 100.0 * completed / totalpeices;
-
-        const float currentSize =
-            static_cast<float>(totalLength * pct / 100.0);
-
-        display(currentSize, pct, lengthOfSize);
-        lastCheckFileSize = currentSize;
-    }
-
-    // ── Completion banner ────────────────────────────────────
-    std::cout << " [100.0%]["
-              << std::fixed << std::setprecision(1)
-              << totalLength / BYTES_PER_MB
-              << "Mb]["
-              << std::string(AMOUNT_HASH_SYMBOLS + 10, '#')
-              << "]\nDownload complete!\n"
-              << separator << '\n';
-}
-
-
-// ============================================================
-// Track speed  (stub)
-// ============================================================
-
-void PieceManager::trackSpeed()
-{
-
-}
 
 DowloadStats PieceManager::getStats() const {
     std::lock_guard<std::mutex> lock(mutex);
@@ -537,3 +403,9 @@ DowloadStats PieceManager::getStats() const {
     stats.speedMBps = smothedSpeed;
     return stats;
 }
+
+
+
+
+
+

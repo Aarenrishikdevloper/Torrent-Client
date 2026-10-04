@@ -53,13 +53,7 @@ class PieceManager {
         int index,
          const std::string& dataToFile
         );
-    //display download progress
-    void display(
-        const float currentFileSize,
-        const double n,
-        const int lenghtOfSize
 
-        );
 public:
      explicit PieceManager(
          const TorrentParser& tfp,
@@ -79,12 +73,9 @@ public:
     void addToBitField(const std::string&peerPeerId, const std::string&payload);
     //returns true when the complete torrent has beeen complete
     bool isComplete();
-
-    //display download progress
-    void trackProgress();
-    //display download  speed;
-    void trackSpeed();
  DowloadStats getStats() const;
+
+
 
 
 

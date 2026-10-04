@@ -54,7 +54,21 @@ void TorrentClient::run() {
     if (trackProgress) {
         std::thread thread([&]() {
             try {
-                pieceManager.trackProgress();
+               constexpr double mb = 1048576.0;
+                DowloadStats s;
+                do {
+                    s = pieceManager.getStats();
+                    const double pct = s.totalbytes?100.0*s.downloadBytes/s.totalbytes:0.0;
+                    std::cout << "Downloaded: " << std::fixed << std::setprecision(1)
+                      << s.downloadBytes / mb << " / " << s.totalbytes / mb << " MB"
+                      << " (" << pct << "%)"
+                      << " | Speed: " << std::setprecision(2) << s.speedMBps << " MB/s"
+                      << " | Pieces: " << s.completedPices << " / " << s.totalPics
+                      << '\n' << std::flush;
+                 if (s.complete)break;
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                }while (true);
+                std::cout << "Download Complete! \n";
             } catch (const std::exception &e) {
                 std::cerr << e.what() << std::endl;
             }catch(...) {}
