@@ -8,7 +8,7 @@ A multithreaded BitTorrent client written in C++ — built from scratch to gain 
 
 ## Project goals
 
-The primary aim is to gain hands-on experience with low-level networking and the BitTorrent protocol (BEP 3) in C++ — including multi-threaded peer connections, piece scheduling, and wire-protocol message framing. The dual CLI/TUI architecture keeps the core logic cleanly separated in `libtorrent_core.a`, shared by both front-ends.
+The primary aim is to gain hands-on experience with low-level networking and the BitTorrent protocol (BEP 3) in C++ — including multi-threaded peer connections, piece scheduling, and wire-protocol message framing. The dual CLI/TUI architecture keeps the core logic cleanly separated as a core engine, shared by both front-ends.
 
 ---
 
