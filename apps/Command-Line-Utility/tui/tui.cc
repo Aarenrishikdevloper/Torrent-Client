@@ -135,6 +135,7 @@ void TorrentTui::startDownloading() {
     if (downloadThread.joinable()) {
         downloadThread.join();
     }
+    clearError();
     downloading = true;
     finished = false;
     //run the downlaod task run in background
@@ -149,9 +150,17 @@ void TorrentTui::runDownload() {
         client->run();
         finished = true;
 
-    } catch (const std::exception &) {
+    } catch (const std::exception &e) {
         finished = false;
+        setError(e.what());
+        pieceManager.store(nullptr);
+        client.reset();
 
+    }catch (...) {
+        finished = false;
+        setError("Unknown exception");
+        pieceManager.store(nullptr);
+        client.reset();
     }
     downloading = false;
 }
@@ -280,7 +289,20 @@ void TorrentTui::draw() {
         mvprintw(
             17,13,"Download finished");
         attroff(COLOR_PAIR(COLOR_PROGRESS)| A_BOLD);
-    }else {
+    } else if (hasError) {
+        attron(COLOR_PAIR(COLOR_ERROR)| A_BOLD);
+        mvprintw(17, 13,"Error");
+        attroff(COLOR_PAIR(COLOR_ERROR)| A_BOLD);
+        std::string message = getError();
+        int maxlen = width - 8;
+        if (static_cast<int>(message.size()) > maxlen) {
+            message = message.substr(0, maxlen - 3);
+        }
+        attron(COLOR_PAIR(COLOR_ERROR)| A_BOLD);
+        mvprintw(18, 4, "%s", message.c_str());
+        attroff(COLOR_PAIR(COLOR_ERROR)| A_BOLD);
+    }
+    else {
         attron(COLOR_PAIR(COLOR_PROGRESS)| A_BOLD);
         mvprintw(17,13, "Waiting");
         attroff(COLOR_PAIR(COLOR_PROGRESS)| A_BOLD);
@@ -334,4 +356,21 @@ void TorrentTui::drawProgress(const DowloadStats &stats, int width) {
     mvprintw(
         25,4,"Pieces: %zu / %zu", stats.completedPices, stats.totalPics
         );
+}
+
+void TorrentTui::setError(const std::string &message) {
+    {
+        std::lock_guard<std::mutex> lock(errorMutex);
+        errorMessage = message;
+    }
+    hasError = true;
+}
+std::string TorrentTui::getError() {
+    std::lock_guard<std::mutex> lock(errorMutex);
+    return errorMessage;
+}
+void TorrentTui::clearError() {
+    hasError = false;
+    std::lock_guard<std::mutex> lock(errorMutex);
+    errorMessage.clear();
 }
