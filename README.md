@@ -181,7 +181,10 @@ Examples:
 
 ```bash
 # Plain command-line download
-torrent-cli -t ./file.torrent -d ~/Downloads
+torrent-cli -t ./file.torrent -d ~/Downloads       
+
+# Same download with the ncurses TUI
+torrent-cli -t ./file.torrent -d ~/Downloads --tui
 
 
 ```
